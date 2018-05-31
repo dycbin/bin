@@ -1,0 +1,103 @@
+package com.youceedu.api.util;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+public class ExcelUtil {
+
+	private static String filepath;
+
+	public ExcelUtil(String path) {
+		this.filepath = path;
+
+	}
+
+	// 1获取Workbook
+	public static Workbook getWb() throws Exception {
+
+		Workbook wb = null;
+		File file = new File(filepath);
+		InputStream input = new FileInputStream(file);
+		if (file.getName().endsWith(".xlsx")) {
+			wb = new XSSFWorkbook(input);
+		} else {
+			wb = new HSSFWorkbook(input);
+		}
+		return wb;
+	}
+
+	// 得到sheet
+	public static Sheet getSheet(int sheetIndex) {
+		Sheet sheet = null;
+		try {
+			if (!getWb().equals(null)) {
+				sheet = getWb().getSheetAt(sheetIndex);
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return sheet;
+	}
+
+	// 获取excel值
+	public static Object[][] getArrayRowCellValue(int sheetIndex) {
+		Object[][] objects = null;
+		// 获取总行数
+		int totalRow = getSheet(sheetIndex).getLastRowNum();
+
+		objects = new Object[totalRow][8];
+		for (int rowIndex = 1; rowIndex <= totalRow; rowIndex++) {
+			Row row = getSheet(sheetIndex).getRow(rowIndex);
+			// 空行跳过
+			if (row == null) {
+				continue;
+			}
+			// 遍历列
+			for (int cellIndex = 0; cellIndex <= 7; cellIndex++) {
+				Cell cell = row.getCell(cellIndex);
+				if (cell == null) {
+					objects[rowIndex - 1][cellIndex] = "";
+				} else {
+					objects[rowIndex - 1][cellIndex] = formCellTypeGetCellValue(cell);
+				}
+			}
+		}
+		return objects;
+	}
+
+	private static Object formCellTypeGetCellValue(Cell cell) {
+		Object value = null;
+		if (cell.getCellType() == Cell.CELL_TYPE_BLANK) {
+			value = "";
+		} else if (cell.getCellType() == Cell.CELL_TYPE_STRING) {
+			value = cell.getStringCellValue();
+		} else if (cell.getCellType() == Cell.CELL_TYPE_NUMERIC) {
+			value = cell.getNumericCellValue();
+		} else if (cell.getCellType() == Cell.CELL_TYPE_FORMULA) {
+			value = cell.getCellFormula();
+		} else if (cell.getCellType() == Cell.CELL_TYPE_ERROR) {
+			value = cell.getErrorCellValue();
+		} else {
+			value = cell.getDateCellValue();
+		}
+		return value;
+	}
+
+	public static void main(String[] args) throws Exception {
+		Object[][] object = getArrayRowCellValue(0);
+		System.out.println(object[0][0]);
+		System.out.println(object[0][1]);
+		System.out.println(object[0][2]);
+
+	}
+}
